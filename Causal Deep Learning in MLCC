@@ -1,0 +1,188 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_curve, auc
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# --- 1. Data Loading and Preprocessing ---
+print("--- 1. Loading and Preprocessing Data ---")
+try:
+    df = pd.read_csv('my data.csv')
+    print("Data loaded successfully.")
+    print(f"Original shape: {df.shape}")
+except FileNotFoundError:
+    print("Error: 'edited data.csv' not found. Please ensure the file is in the correct directory.")
+    exit()
+
+# Clean the data by dropping the erroneous 'B' column
+if 'B' in df.columns:
+    df = df.drop(columns=['B'])
+
+# Correct unrealistic outliers in the 'wt' (maternal weight) column
+wt_median = df['wt'].median()
+df['wt'] = np.where((df['wt'] < 35.0) | (df['wt'] > 150.0), wt_median, df['wt'])
+print("Data cleaned and preprocessed.")
+print("-" * 40 + "\n")
+
+
+# --- 2. Normalized Importance of Variables (Recreating Figure 3) ---
+print("--- 2. Calculating Normalized Importance of Variables ---")
+
+# Define the specific features for this analysis
+selected_features = [
+    'MecoAsp', 'PerinatalDeath', 'GestHypert', 'VacResusc',
+    'PrevSurg', 'GestAge_cat', 'MotherAlloc'
+]
+
+# Ensure all columns exist before proceeding
+missing_cols = [col for col in selected_features if col not in df.columns]
+if missing_cols:
+    print(f"Error: The following columns for importance analysis were not found: {missing_cols}")
+else:
+    X_imp = df[selected_features]
+    y_imp = df['LBW']
+
+    # Train a RandomForest model to get feature importances
+    model_rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    model_rf.fit(X_imp, y_imp)
+
+    # Create a DataFrame of importances
+    importance_df = pd.DataFrame({
+        'Variable': X_imp.columns,
+        'Importance': model_rf.feature_importances_
+    }).sort_values(by='Importance', ascending=False)
+
+    # Normalize the importance scores
+    importance_df['Normalized Importance'] = importance_df['Importance'] / importance_df['Importance'].max()
+
+    print("Normalized Feature Importances:")
+    print(importance_df[['Variable', 'Normalized Importance']].round(3))
+
+    # Plotting the feature importances
+    plt.style.use('seaborn-v0_8-talk')
+    fig, ax = plt.subplots(figsize=(12, 8))
+    sns.barplot(x='Normalized Importance', y='Variable', data=importance_df, palette='coolwarm', ax=ax)
+    ax.set_title('Figure 3: Normalized Importance of Variables', fontsize=18, pad=20)
+    ax.set_xlabel('Importance', fontsize=14)
+    ax.set_ylabel('')
+    for index, value in enumerate(importance_df['Normalized Importance']):
+        ax.text(value + 0.005, index, f'{value:.3f}', va='center')
+    plt.tight_layout()
+    plt.show()
+
+print("-" * 40 + "\n")
+
+
+# --- 3. Power of Receiver Operating Characteristic (ROC) Curve (Recreating Figure 4) ---
+print("--- 3. Generating Receiver Operating Characteristic (ROC) Curve ---")
+
+# Define features (all columns except LBW) and target
+y = df['LBW']
+X = df.drop('LBW', axis=1)
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
+
+# Identify numerical features for scaling
+numerical_features = X.select_dtypes(include=np.number).columns.tolist()
+scaler = StandardScaler()
+
+# Fit scaler on training data and transform both sets
+X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
+X_test[numerical_features] = scaler.transform(X_test[numerical_features])
+
+# Train a logistic regression model
+model_logreg = LogisticRegression(solver='liblinear', random_state=42)
+model_logreg.fit(X_train, y_train)
+
+# Predict probabilities for the positive class (LBW=1)
+y_pred_proba = model_logreg.predict_proba(X_test)[:, 1]
+
+# Calculate ROC curve and AUC
+fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+roc_auc = auc(fpr, tpr)
+print(f"Area Under ROC Curve (AUC): {roc_auc:.4f}")
+
+# Plot the ROC Curve
+plt.figure(figsize=(10, 8))
+plt.plot(fpr, tpr, color='blue', lw=2, label=f'Model (AUC = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='grey', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('1 - Specificity (False Positive Rate)', fontsize=14)
+plt.ylabel('Sensitivity (True Positive Rate)', fontsize=14)
+plt.title('Figure 4: Power of Receiver Operating Characteristic Curves', fontsize=16)
+plt.legend(loc="lower right")
+plt.show()
+
+print("-" * 40 + "\n")
+
+
+# --- 4. Neural Network Parameter Estimates (Recreating Figure 5 and Table 4) ---
+print("--- 4. Analyzing Neural Network Parameters ---")
+if not missing_cols: # Only run if the selected features were found
+    # Prepare the specific data for the neural network
+    X_nn = df[selected_features]
+    y_nn = df['LBW']
+    
+    # Neural networks are sensitive to feature scaling
+    scaler_nn = StandardScaler()
+    X_nn_scaled = scaler_nn.fit_transform(X_nn)
+
+    # Build the 3-layer MLP model as depicted in Figure 5
+    model_mlp = Sequential([
+        Dense(5, activation='tanh', input_shape=(X_nn.shape[1],), name='hidden_layer_1'),
+        Dense(1, activation='sigmoid', name='output_layer')
+    ])
+    
+    # Compile the model
+    model_mlp.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    
+    # Train the model
+    model_mlp.fit(X_nn_scaled, y_nn, epochs=50, batch_size=32, verbose=0)
+    print("3-Layer MLP model trained successfully.")
+
+    # Extract weights and biases
+    hidden_layer_weights, hidden_layer_biases = model_mlp.get_layer('hidden_layer_1').get_weights()
+    output_layer_weights, output_layer_biases = model_mlp.get_layer('output_layer').get_weights()
+
+    # Create the parameter estimates table (similar to Table 4)
+    # Note: LBW=0 is Normal, LBW=1 is Low Birth Weight. The model predicts P(LBW=1).
+    # A positive weight to the output layer favors LBW=1, a negative weight favors LBW=0.
+    # The document seems to have reversed this (LBW=0 is Low, NBW=1 is Normal). We will follow the data's convention.
+    
+    # Input Layer to Hidden Layer 1
+    input_to_hidden_df = pd.DataFrame(
+        data=hidden_layer_weights,
+        index=selected_features,
+        columns=[f'H(1:{i+1})' for i in range(5)]
+    )
+    bias_df = pd.DataFrame([hidden_layer_biases], index=['Bias'], columns=[f'H(1:{i+1})' for i in range(5)])
+    input_to_hidden_df = pd.concat([bias_df, input_to_hidden_df])
+    
+    # Hidden Layer 1 to Output Layer
+    hidden_to_output_df = pd.DataFrame(
+        data=output_layer_weights.flatten(),
+        index=[f'H(1:{i+1})' for i in range(5)],
+        columns=['Weight to Output']
+    )
+    output_bias_df = pd.DataFrame({'Weight to Output': output_layer_biases}, index=['Bias'])
+    hidden_to_output_df = pd.concat([output_bias_df, hidden_to_output_df])
+    
+    print("\n--- Table 4: Parameter Estimates for Hidden and Output Layers ---")
+    print("\nInput Layer to Hidden Layer 1 Weights:")
+    print(input_to_hidden_df.round(3))
+    
+    print("\nHidden Layer 1 to Output Layer Weights (Predicting P(LBW=1)):")
+    # Positive weights increase probability of LBW=1 (Low Birth Weight)
+    # Negative weights increase probability of LBW=0 (Normal Birth Weight)
+    print(hidden_to_output_df.round(3))
+
+print("\n--- Full Analysis Complete ---")
