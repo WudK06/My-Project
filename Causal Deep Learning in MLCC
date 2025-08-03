@@ -162,7 +162,7 @@ AUC Score: The code will print the AUC score, which is a single number summarizi
 An AUC of 0.88 (as seen in the document) is considered excellent. The result should be close to this value.
 Output Plot: The generated plot will show the True Positive Rate vs. the False Positive Rate.
 # Neural Network Parameter Estimates (Figure & Table )
-Model Architecture: The code builds a neural network with one input layer (7 variables), one hidden layer (5 neurons), 
+Model Architecture: The code builds a neural network with 7 input layer (7 variables), 5 hidden layer (5 neurons), 
 and one output layer (prediction).
 Output Tables:
 Input to Hidden Layer: This table shows the "synaptic weights" connecting each of the 7 input variables to the 5 neurons in the hidden layer.
