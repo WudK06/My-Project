@@ -11,9 +11,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
-# --- 1. Data Loading and Preprocessing ---
-print("--- 1. Loading and Preprocessing Data ---")
-try:
+# 1. Data Loading and Preprocessing 
     df = pd.read_csv('my data.csv')
     print("Data loaded successfully.")
     print(f"Original shape: {df.shape}")
@@ -24,8 +22,6 @@ if 'B' in df.columns:
 wt_median = df['wt'].median()
 df['wt'] = np.where((df['wt'] < 35.0) | (df['wt'] > 150.0), wt_median, df['wt'])
 print("Data cleaned and preprocessed.")
-print("-" * 40 + "\n")
-
 # --- 2. Normalized Importance of Variables (Recreating Figure 3) ---
 print("--- 2. Calculating Normalized Importance of Variables ---")
 
@@ -34,7 +30,6 @@ selected_features = [
     'MecoAsp', 'PerinatalDeath', 'GestHypert', 'VacResusc',
     'PrevSurg', 'GestAge_cat', 'MotherAlloc'
 ]
-
 # Ensure all columns exist before proceeding
 missing_cols = [col for col in selected_features if col not in df.columns]
 if missing_cols:
@@ -63,20 +58,15 @@ else:
     plt.style.use('seaborn-v0_8-talk')
     fig, ax = plt.subplots(figsize=(12, 8))
     sns.barplot(x='Normalized Importance', y='Variable', data=importance_df, palette='coolwarm', ax=ax)
-    ax.set_title('Figure 3: Normalized Importance of Variables', fontsize=18, pad=20)
+    ax.set_title(' Normalized Importance of Variables', fontsize=18, pad=20)
     ax.set_xlabel('Importance', fontsize=14)
     ax.set_ylabel('')
     for index, value in enumerate(importance_df['Normalized Importance']):
         ax.text(value + 0.005, index, f'{value:.3f}', va='center')
     plt.tight_layout()
     plt.show()
-
-print("-" * 40 + "\n")
-
-
-# --- 3. Power of Receiver Operating Characteristic (ROC) Curve (Recreating Figure 4) ---
+# 3. Power of Receiver Operating Characteristic (ROC) 
 print("--- 3. Generating Receiver Operating Characteristic (ROC) Curve ---")
-
 # Define features (all columns except LBW) and target
 y = df['LBW']
 X = df.drop('LBW', axis=1)
@@ -116,10 +106,7 @@ plt.title('Figure 4: Power of Receiver Operating Characteristic Curves', fontsiz
 plt.legend(loc="lower right")
 plt.show()
 
-print("-" * 40 + "\n")
-
-
-# --- 4. Neural Network Parameter Estimates (Recreating Figure 5 and Table 4) ---
+# 4. Neural Network Parameter Estimates 
 print("--- 4. Analyzing Neural Network Parameters ---")
 if not missing_cols: # Only run if the selected features were found
     # Prepare the specific data for the neural network
@@ -178,5 +165,25 @@ if not missing_cols: # Only run if the selected features were found
     # Positive weights increase probability of LBW=1 (Low Birth Weight)
     # Negative weights increase probability of LBW=0 (Normal Birth Weight)
     print(hidden_to_output_df.round(3))
-
-print("\n--- Full Analysis Complete ---")
+Based on the above Python code the following are a bit explanations
+# Normalized Importance of Variables
+The code trains a Random Forest model, which is an ensemble of decision trees, to determine which of your selected features are most predictive of LBW.
+Output Table: The script will print a table showing the normalized importance of each variable. The variable with the highest score is the most influential in the model's predictions.
+Output Plot: A bar chart visually ranks the variables. You can directly compare this to your "Normalized Importance of Variables". 
+The results should be very similar, confirming that Gestational Age, Meconium Aspiration, and Perinatal Death are the most critical factors among this set.
+# Power of Receiver Operating Characteristic (ROC) 
+This section evaluates how well a classification model can distinguish between Low Birth Weight (LBW=1) and Normal Birth Weight (LBW=0) cases.
+AUC Score: The code will print the AUC score, which is a single number summarizing the model's performance. 
+An AUC of 0.88 (as seen in the document) is considered excellent. Your result should be close to this value.
+Output Plot: The generated plot will show the True Positive Rate vs. the False Positive Rate.
+# Neural Network Parameter Estimates (Figure  & Table )
+Model Architecture: The code builds a neural network with one input layer (7 variables), one hidden layer (5 neurons), 
+and one output layer (prediction), exactly matching the structure shown in your Figure 5.
+Output Tables:
+Input to Hidden Layer: This table shows the "synaptic weights" connecting each of the 7 input variables to the 5 neurons in the hidden layer.
+A strong positive or negative weight indicates a strong influence. For example, you can look at the column for H(1:2) 
+and see the large positive weight (e.g., ~0.728 in your document) coming from MecoAsp, indicating this feature strongly activates that specific hidden neuron.
+Hidden to Output Layer: This table shows the weights connecting the 5 hidden neurons to the final output.
+In our model, a positive weight from a hidden neuron increases the final probability of LBW=1 (Low Birth Weight). 
+A negative weight pushes the prediction towards LBW=0 (Normal Birth Weight). 
+This allows you to interpret which combinations of features (represented by the hidden neurons) are associated with low vs. normal birth weight.
