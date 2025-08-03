@@ -1,14 +1,13 @@
 # Import the essential libraries for data handling and numerical operations
 import pandas as pd
 import numpy as np
-print("--- Step 1: Loading the Data ---")
+# Step 1: Loading the Data
 # We'll load the CSV file into a pandas DataFrame.
 # A DataFrame is like a smart spreadsheet that we can manipulate with code.
     df = pd.read_csv('my data.csv')
-    print("✅ Data loaded successfully!")
     print(f"Original shape of the dataset: {df.shape[0]} rows and {df.shape[1]} columns.")
 print("-" * 50)
-  Step 2: Initial Exploration and Basic Cleaning 
+  # Step 2: Initial Exploration and Basic Cleaning 
 
 # Let's peek at the first 5 rows to see what we're working with.
 print("\nFirst 5 rows of the raw data:")
@@ -23,15 +22,9 @@ df.info()
 # to be an error from the CSV creation. Let's remove it.
 if 'B' in df.columns:
     df = df.drop(columns=['B'])
-    print("\n✅ The incomplete 'B' column has been removed.")
-else:
     print("\n'B' column not found, no action needed.")
 
-print(f"Shape after basic cleaning: {df.shape[0]} rows and {df.shape[1]} columns.")
-print("-" * 50)
-
  # Step 3: Handling Outliers and Inconsistent Data
-
 # Let's get summary statistics to spot potential issues.
 print("\nSummary statistics for numerical columns:")
 print(df.describe().round(2))
@@ -74,8 +67,7 @@ if num_outliers_bp > 0:
 else:
     print("✅ No obvious outliers found in the 'BP' column.")
 
-print("-" * 50)
-Step 4: Separating Features (X) and Target (y) 
+# Step 4: Separating Features (X) and Target (y) 
 
 # Our target variable is 'LBW'.
 y = df['LBW']
@@ -87,7 +79,7 @@ print(f"✅ Target variable 'y' (LBW) has been created with {len(y)} records.")
 print(f"✅ Feature set 'X' has been created with {X.shape[1]} columns.")
 print("-" * 50)
 
-  Step 5: Splitting Data into Training and Testing Sets 
+  # Step 5: Splitting Data into Training and Testing Sets 
 
 # We use scikit-learn's train_test_split function for this.
 # test_size=0.2 means 20% of the data will be for testing.
@@ -107,7 +99,7 @@ print(f"Training set size: {len(X_train)} samples ({len(X_train)/len(df):.0%})")
 print(f"Testing set size: {len(X_test)} samples ({len(X_test)/len(df):.0%})")
 print("-" * 50)
   
- Step 6: Scaling Numerical Features 
+ # Step 6: Scaling Numerical Features 
 
 # We will scale only the continuous numerical columns. We don't want to scale
 # categorical identifiers (like ethnicity 'eth') or binary flags (like 'GestHypert').
@@ -134,7 +126,7 @@ print("✅ Training and testing sets have been successfully scaled.")
 # Let's look at the first 5 rows of our fully preprocessed training data.
 print("\nFirst 5 rows of the final, preprocessed training data (X_train):")
 print(X_train.head())
-print("-" * 50)
+
 print("Your data is now fully preprocessed and ready for model training.")
 print("You have the following sets available:")
 print(" - X_train: Features for training the model.")
