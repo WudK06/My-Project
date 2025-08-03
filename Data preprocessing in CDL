@@ -17,7 +17,7 @@ print("\nDataset Information (Columns, Data Types, Non-Nulls):")
 df.info()
 
 # From the .info() output and our file, we see a final column 'B' that seems
-# to be an error from the CSV creation. Let's remove it.
+# to be an error from the CSV creation.
 if 'B' in df.columns:
     df = df.drop(columns=['B'])
     print("\n'B' column not found, no action needed.")
@@ -45,7 +45,7 @@ if num_outliers_wt > 0:
     # The median is robust to extreme values and is a safer choice than the mean.
     df.loc[outliers_mask_wt, 'wt'] = wt_median
 
-# --- Correcting Blood Pressure ('BP') ---
+# Correcting Blood Pressure ('BP') 
 # Similarly, let's check the 'BP' column for impossible values.
 # A diastolic blood pressure over 160 is extremely rare and could be a data entry error.
 bp_median = df['BP'].median()
@@ -87,7 +87,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42,
     stratify=y
 )
-
 print("✅ Data successfully split.")
 print(f"Training set size: {len(X_train)} samples ({len(X_train)/len(df):.0%})")
 print(f"Testing set size: {len(X_test)} samples ({len(X_test)/len(df):.0%})")
