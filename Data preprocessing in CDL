@@ -8,13 +8,11 @@ import numpy as np
     print(f"Original shape of the dataset: {df.shape[0]} rows and {df.shape[1]} columns.")
 print("-" * 50)
   # Step 2: Initial Exploration and Basic Cleaning 
-
 # Let's peek at the first 5 rows to see what we're working with.
 print("\nFirst 5 rows of the raw data:")
 print(df.head())
 
-# The .info() method gives a great summary of all columns, their data types,
-# and how many non-missing values they have.
+# The .info() method gives a great summary of all columns, their data types, and how many non-missing values they have.
 print("\nDataset Information (Columns, Data Types, Non-Nulls):")
 df.info()
 
@@ -29,7 +27,6 @@ if 'B' in df.columns:
 print("\nSummary statistics for numerical columns:")
 print(df.describe().round(2))
 
-# --- Correcting Maternal Weight ('wt') ---
 # From the summary, we can see 'wt' might have some strange values.
 # A maternal weight of 11.1kg is physiologically impossible for an adult.
 # We'll define a "plausible" range (e.g., 35kg to 150kg) and fix values outside it.
@@ -47,9 +44,6 @@ if num_outliers_wt > 0:
     # A good strategy is to replace these outliers with the median value of the column.
     # The median is robust to extreme values and is a safer choice than the mean.
     df.loc[outliers_mask_wt, 'wt'] = wt_median
-    print(f"✅ Replaced 'wt' outliers with the median value: {wt_median} kg.")
-else:
-    print("\n✅ No obvious outliers found in the 'wt' column.")
 
 # --- Correcting Blood Pressure ('BP') ---
 # Similarly, let's check the 'BP' column for impossible values.
@@ -100,8 +94,7 @@ print(f"Testing set size: {len(X_test)} samples ({len(X_test)/len(df):.0%})")
 print("-" * 50)
   
  # Step 6: Scaling Numerical Features 
-
-# We will scale only the continuous numerical columns. We don't want to scale
+# We were scaled only the continuous numerical columns. We don't want to scale
 # categorical identifiers (like ethnicity 'eth') or binary flags (like 'GestHypert').
 numerical_features = ['ag', 'inc', 'age', 'wt', 'birthweght', 'GAd', 'BP']
 print(f"Identified the following numerical features for scaling: {numerical_features}")
@@ -117,7 +110,7 @@ scaler = StandardScaler()
 print("\nFitting the scaler on the training data...")
 scaler.fit(X_train[numerical_features])
 
-# Now, we transform both sets.
+# Now, we transformed both sets.
 X_train[numerical_features] = scaler.transform(X_train[numerical_features])
 X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 
